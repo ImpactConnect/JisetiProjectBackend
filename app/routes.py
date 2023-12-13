@@ -1,10 +1,12 @@
 from flask import render_template, flash, redirect, url_for, jsonify, request, current_app
+from app import app, db, login_manager
 from flask_login import login_user, login_required, logout_user, current_user
-from app import app, db
-from models import User, RedFlag, Intervention, AdminAction
-from forms import UserRegistration, UserLogin, AdminAction
+from app.models import User, RedFlag, Intervention, AdminAction
+from app.forms import UserRegistration, UserLogin
 
-
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -173,7 +175,7 @@ def create_intervention():
 #User delete intervention post
 @app.route('/user/delete_intervention/<int:intervention_id>', methods=['DELETE'])
 @login_required
-def delete_redflag(intervention_id):
+def delete_intervention(intervention_id):
     intervention = Intervention.query.get_or_404(intervention_id)
 
     if intervention.user_id == current_user.id:
@@ -223,9 +225,9 @@ def edit_redflag(redflag_id):
         return jsonify({'error': 'Unauthorized to edit this Post'}), 403
     
 #Access to edit personal redflag post    
-@app.route('/api/user/edit_intervention/<int:intervention_id>', methods=['PUT'])
+@app.route('/user/edit_intervention/<int:intervention_id>', methods=['PUT'])
 @login_required
-def edit_redflag(intervention_id):
+def edit_intervention(intervention_id):
     intervention = RedFlag.query.get_or_404(intervention_id)
 
     if intervention.user_id == current_user.id:
