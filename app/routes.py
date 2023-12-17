@@ -15,7 +15,7 @@ def register():
 
     form = UserRegistration()
     if form.validate_on_submit():
-        user = User(username=form.username.data, first_name=form.first_name.data, last_name=form.last_name.data, phone=form.phone.data, email=form.email.data, password=form.password.data)
+        user = User(username=form.username.data, name=form.name.data, phone=form.phone.data, email=form.email.data, password=form.password.data)
         db.session.add(user)
         db.session.commit()
         flash('Your account has been created!', 'success')
@@ -30,27 +30,32 @@ def login():
         return redirect(url_for('home'))
 
     form = UserLogin()
-    if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
-        if user and user.password == form.password.data:
-            login_user(user, remember=form.remember.data)
+    if form.validate_on_submit(): #
+        user = User.query.filter_by(email=form.email.data).first() #
+        if user and user.password == form.password.data: #
+            login_user(user, remember=form.remember.data) #
             return redirect(url_for('home'))
         else:
             flash('Login unsuccessful. Please check email and password.', 'danger')
 
     return render_template('login.jsx', title='Login', form=form)
 
+#User logout
 @app.route('/logout')
 def logout():
     logout_user()
     return redirect(url_for('home'))
 
-#display all users' posts after login
-@app.route('/all_posts', methods=['GET'])
-@login_required
+#display all posts in the home page
+@app.route('/', methods=['GET'])
 def home_page():
     redflag_posts = RedFlag.query.all()
     intervention_posts = Intervention.query.all()
+    
+    # To display the current user's username
+    current_username = current_user.username if current_user.is_authenticated else None
+
+    
     redflags_data = [{
             'poster': User.query.get(redflag.user_id).username,
             'title': redflag.title,
