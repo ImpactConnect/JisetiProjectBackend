@@ -48,6 +48,7 @@ def logout():
 
 #display all posts in the home page
 @app.route('/', methods=['GET'])
+@login_required
 def home_page():
     redflag_posts = RedFlag.query.all()
     intervention_posts = Intervention.query.all()
@@ -117,8 +118,8 @@ def create_redflag():
         data = request.json
         title = data.get('title')
         description = data.get('description')
-        # location_lat = data.get('location_lat')
-        # location_long = data.get('location_long')
+        location_lat = data.get('location_lat')
+        location_long = data.get('location_long')
         image_file = data.get('image_file')
         video_file = data.get('video_file')
 
@@ -129,8 +130,8 @@ def create_redflag():
         new_redflag = RedFlag(
             title=title,
             description=description,
-            # location_lat=location_lat,
-            # location_long=location_long,
+            location_lat=location_lat,
+            location_long=location_long,
             image_file=image_file,
             video_file=video_file,
             user_id=current_user.id

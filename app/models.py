@@ -26,13 +26,13 @@ class RedFlag(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(255), nullable=False)
-    location = db.Column(db.String(20), default='pending')
+    location_lat = db.Column(db.Float, nullable=True)
+    location_long = db.Column(db.Float, nullable=True)
     image_file = db.Column(db.String, nullable=False)
     video_file = db.Column(db.String, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     date = db.Column(db.DateTime, default=datetime.utcnow)
     status = db.Column(db.String(20), default='pending')  # 'pending', 'investigating', 'rejected', 'resolved'
-    category = db.Column(db.String(255), nullable=False)
     admin_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
 
@@ -42,7 +42,8 @@ class Intervention(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(255), nullable=False)
-    location = db.Column(db.String(20), default='pending')
+    location_lat = db.Column(db.Float, nullable=True)
+    location_long = db.Column(db.Float, nullable=True)
     image_file = db.Column(db.String, nullable=False)
     video_file = db.Column(db.String, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
