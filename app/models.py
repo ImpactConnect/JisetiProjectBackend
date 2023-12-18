@@ -3,8 +3,6 @@ from flask_login import UserMixin
 from datetime import datetime
 from app import db
 
-# db = SQLAlchemy()
-
 class User(db.Model, UserMixin):
     __tablename__ = 'user'
 
@@ -16,8 +14,11 @@ class User(db.Model, UserMixin):
     phone_number = db.Column(db.Integer, unique=True, nullable=False)
     is_admin = db.Column(db.Boolean, default=False)  # New field to indicate admin status
 
-    red_flags = db.relationship('RedFlag', backref='user', lazy=True)
-    interventions = db.relationship('Intervention', backref='user', lazy=True)
+    # red_flags = db.relationship('RedFlag', backref='user', lazy=True)
+    # interventions = db.relationship('Intervention', backref='user', lazy=True)
+
+    red_flags = db.relationship('RedFlag', backref='user', lazy=True, foreign_keys='RedFlag.user_id')
+    interventions = db.relationship('Intervention', backref='user', lazy=True, foreign_keys='Intervention.user_id')
 
 
 class RedFlag(db.Model):
@@ -33,7 +34,7 @@ class RedFlag(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     date = db.Column(db.DateTime, default=datetime.utcnow)
     status = db.Column(db.String(20), default='pending')  # 'pending', 'investigating', 'rejected', 'resolved'
-    admin_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    admin_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True, default=5)  # Set default admin_id to 5
 
 
 class Intervention(db.Model):
@@ -49,7 +50,7 @@ class Intervention(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     date = db.Column(db.DateTime, default=datetime.utcnow)
     status = db.Column(db.String(20), default='pending')  # 'pending', 'investigating', 'rejected', 'resolved'
-    admin_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    admin_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True, default=5)  # Set default admin_id to 5
 
 
 class AdminAction(db.Model):

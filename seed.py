@@ -1,34 +1,32 @@
-# run.py
+from app import create_app, db
+from app.models import User, RedFlag, Intervention
 
-from flask_script import Manager
-from flask_migrate import Migrate, MigrateCommand
-from app import app, db
-from app.models import User, RedFlag, Intervention, AdminAction
+def seed_data():
+    app = create_app()
+    with app.app_context():
+        # Seed users
+        user01 = User(username='testusr', name='Test Userr', email='tes11@example.com', password='password123', phone_number=1084767890)
+        user22 = User(username='tesuser0', name='Test User r0', email='tes22@example.com', password='password456', phone_number=9872542710)
 
-manager = Manager(app)
-migrate = Migrate(app, db)
+        db.session.add_all([user01, user22])
 
-manager.add_command('db', MigrateCommand)
+        # Commit the changes
+        db.session.commit()
 
-@manager.command
-def seed_db():
-    """Seed the database with dummy data."""
-    # Add your code here to create and add dummy data to the database
-    # For example:
-    user = User(username='dummy_user', name='Dummy User', email='dummy@example.com', password='password', phone_number='1234567890')
-    db.session.add(user)
+        # Create RedFlag posts
+        redflag1 = RedFlag(title='Red Flag 1', description='Lorem ipsum dolor sit amet consectetur adipisicing elit. Ullam esse blanditiis, sapiente neque, corporis aliquid cum exercitationem libero maiores atque maxime itaque. Rem harum autem modi voluptates ut ex distinctio.1', user=user01, location_lat=12.345, location_long=67.890, image_file='redflag1.jpg', video_file='redflag1.mp4', status='pending', admin_id=5)
+        redflag2 = RedFlag(title='Red Flag 2', description='Lorem ipsum dolor sit amet consectetur adipisicing elit. Ullam esse blanditiis, sapiente neque, corporis aliquid cum exercitationem libero maiores atque maxime itaque. Rem harum autem modi voluptates ut ex distinctio.2', user=user22, location_lat=98.765, location_long=43.210, image_file='redflag2.jpg', video_file='redflag2.mp4', status='pending', admin_id=5)
 
-    redflag = RedFlag(title='Dummy RedFlag', description='This is a dummy red flag.', image_file='dummy.jpg', video_file='dummy.mp4', user=user)
-    db.session.add(redflag)
+        db.session.add_all([redflag1, redflag2])
 
-    intervention = Intervention(title='Dummy Intervention', description='This is a dummy intervention.', image_file='dummy.jpg', video_file='dummy.mp4', user=user)
-    db.session.add(intervention)
+        # Create Intervention posts
+        intervention1 = Intervention(title='Intervention 1', description='Lorem ipsum dolor sit amet consectetur adipisicing elit. Ullam esse blanditiis, sapiente neque, corporis aliquid cum exercitationem libero maiores atque maxime itaque. Rem harum autem modi voluptates ut ex distinctio.3', user=user01, location_lat=12.345, location_long=67.890, image_file='intervention1.jpg', video_file='intervention1.mp4', status='pending', admin_id=5)
+        intervention2 = Intervention(title='Intervention 2', description='Lorem ipsum dolor sit amet consectetur adipisicing elit. Ullam esse blanditiis, sapiente neque, corporis aliquid cum exercitationem libero maiores atque maxime itaque. Rem harum autem modi voluptates ut ex distinctio.4', user=user22, location_lat=98.765, location_long=43.210, image_file='intervention2.jpg', video_file='intervention2.mp4', status='pending', admin_id=5)
 
-    admin_action = AdminAction(post_id=redflag.id, post_type='redflag', status='resolved', admin_id=user.id)
-    db.session.add(admin_action)
+        db.session.add_all([intervention1, intervention2])
 
-    db.session.commit()
-    print('Database seeded successfully.')
+        # Commit the changes
+        db.session.commit()
 
 if __name__ == '__main__':
-    manager.run()
+    seed_data()
