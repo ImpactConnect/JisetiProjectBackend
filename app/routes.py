@@ -21,14 +21,14 @@ def init_routes(app):
             user = User(username=form.username.data, name=form.name.data, phone=form.phone.data, email=form.email.data, password=password_hash)
             db.session.add(user)
             db.session.commit()
-        #     flash('Your account has been created!', 'success')
-        #     return redirect(url_for('login'))
+            flash('Your account has been created!', 'success')
+            return redirect(url_for('login'))
 
-        # return render_template('register.jsx', title='Register', form=form)
+        return render_template('register.jsx', title='Register', form=form)
 
-            return jsonify({'success': True, 'message': 'Your account has been created!'}), 201
+        #     return jsonify({'success': True, 'message': 'Your account has been created!'}), 201
 
-        return jsonify({'error': 'Invalid form submission'}), 400
+        # return jsonify({'error': 'Invalid form submission'}), 400
 
 
     #user login route
