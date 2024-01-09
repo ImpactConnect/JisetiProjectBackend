@@ -26,6 +26,11 @@ def init_routes(app):
 
         return render_template('register.jsx', title='Register', form=form)
 
+        #     return jsonify({'success': True, 'message': 'Your account has been created!'}), 201
+
+        # return jsonify({'error': 'Invalid form submission'}), 400
+
+
     #user login route
     @app.route('/login', methods=['GET', 'POST'])
     def login():
@@ -64,7 +69,8 @@ def init_routes(app):
                 'poster': User.query.get(redflag.user_id).username,
                 'title': redflag.title,
                 'description': redflag.description,
-                'location': redflag.location,
+                'location_lat': redflag.location_lat,
+                'location_long': redflag.location_long,
                 'image_file': redflag.image_file,
                 'video_file': redflag.video_file,
                 'date': redflag.date,
@@ -75,15 +81,61 @@ def init_routes(app):
             'poster': User.query.get(intervention.user_id).username,
             'title': intervention.title,
             'description': intervention.description,
-            'location': intervention.location,
-            'image_file': intervention.image_flag,
+            'location_lat': intervention.location_lat,
+            'location_long': intervention.location_long,
+            'image_file': intervention.image_file,
+            'video_file': intervention.video_file,
+            'image_file': intervention.image_file,
             'date': intervention.date,
             'status': intervention.status
         } for intervention in intervention_posts]
         
         return jsonify({'redflag_posts': redflags_data, 'intervention_posts': interventions_data})
 
+
+    #Filter red_flag Posts in the home page
+    @app.route('/redflags', methods=['GET'])
+    # @login_required
+    def filter_red_flag():
+        redflag_posts = RedFlag.query.all()
         
+        redflags_data = [{
+                'poster': User.query.get(redflag.user_id).username,
+                'title': redflag.title,
+                'description': redflag.description,
+                'location_lat': redflag.location_lat,
+                'location_long': redflag.location_long,
+                'image_file': redflag.image_file,
+                'video_file': redflag.video_file,
+                'date': redflag.date,
+                'status': redflag.status}     
+                    for redflag in redflag_posts]
+        
+        return jsonify({'redflag_posts': redflags_data})
+    
+    
+    #Filter red_flag Posts in the home page
+    @app.route('/interventions', methods=['GET'])
+    @login_required
+    def filter_intervention():
+        intervention_posts = Intervention.query.all()
+        
+        interventions_data =[{
+            'poster': User.query.get(intervention.user_id).username,
+            'title': intervention.title,
+            'description': intervention.description,
+            'location_lat': intervention.location_lat,
+            'location_long': intervention.location_long,
+            'image_file': intervention.image_file,
+            'video_file': intervention.video_file,
+            'image_file': intervention.image_file,
+            'date': intervention.date,
+            'status': intervention.status
+        } for intervention in intervention_posts]
+        
+        return jsonify({'redflag_posts': interventions_data})
+
+    
     @app.route('/about')
     def about():
         return render_template('about')
