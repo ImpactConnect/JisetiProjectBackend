@@ -4,6 +4,7 @@ from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from app.models import User, RedFlag, Intervention, AdminAction
 from app.forms import UserRegistration, UserLogin
+from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
 
 def init_routes(app):
     @login_manager.user_loader
@@ -21,14 +22,13 @@ def init_routes(app):
             user = User(username=form.username.data, name=form.name.data, phone=form.phone.data, email=form.email.data, password=password_hash)
             db.session.add(user)
             db.session.commit()
+            # Access token upon successful registration
+            access_token = create_access_token(identity=user.id)
             flash('Your account has been created!', 'success')
-            return redirect(url_for('login'))
+        
+            return jsonify({'success': True, 'message': 'Your account has been created!'}), 201
 
-        return render_template('register.jsx', title='Register', form=form)
-
-        #     return jsonify({'success': True, 'message': 'Your account has been created!'}), 201
-
-        # return jsonify({'error': 'Invalid form submission'}), 400
+        return jsonify({'error': 'Invalid form submission'}), 400
 
 
     #user login route
@@ -42,11 +42,15 @@ def init_routes(app):
             user = User.query.filter_by(email=form.email.data).first() #
             if user and check_password_hash(user.password, form.password.data):
                 login_user(user, remember=form.remember.data) #
-                return redirect(url_for('home'))
+                
+                # Access token upon successful login
+                access_token = create_access_token(identity=user.id)
+                
+                return jsonify(access_token=access_token), 201
             else:
                 flash('Login unsuccessful. Please check email and password.', 'danger')
 
-        return render_template('login.jsx', title='Login', form=form)
+        return jsonify({'error': 'Invalid form submission'}), 400
 
     #User logout
     @app.route('/logout')
@@ -56,14 +60,17 @@ def init_routes(app):
 
     #display all posts in the home page
     @app.route('/', methods=['GET'])
-    @login_required
+    # @login_required
     def home_page():
-        redflag_posts = RedFlag.query.all()
-        intervention_posts = Intervention.query.all()
+        # identity of the current user with get_jwt_identity
+        current_user_id = get_jwt_identity()
         
         # To display the current user's username
-        current_username = current_user.username if current_user.is_authenticated else None
+        current_username = User.query.get(current_user_id).username if current_user_id else None
 
+        
+        redflag_posts = RedFlag.query.all()
+        intervention_posts = Intervention.query.all()
         
         redflags_data = [{
                 'poster': User.query.get(redflag.user_id).username,
@@ -116,7 +123,7 @@ def init_routes(app):
     
     #Filter red_flag Posts in the home page
     @app.route('/interventions', methods=['GET'])
-    @login_required
+    # @login_required
     def filter_intervention():
         intervention_posts = Intervention.query.all()
         
@@ -135,31 +142,46 @@ def init_routes(app):
         
         return jsonify({'redflag_posts': interventions_data})
 
-    
-    @app.route('/about')
-    def about():
-        return render_template('about')
 
 
     #User access to his personal posts after login
     @app.route('/posts', methods=['GET'])
-    @login_required
-    def posts():
+    @jwt_required()
+    def user_posts():
         redflags = RedFlag.query.filter_by(user_id=current_user.id).all()
         interventions = Intervention.query.filter_by(user_id=current_user.id).all()
 
-        return render_template('posts.jsx', title='Posts', redflags=redflags, interventions=interventions)
+        redflags_data = [{
+            'title': redflag.title,
+            'description': redflag.description,
+            'location': redflag.location,
+            'image_file': redflag.image_file,
+            'video_file': redflag.video_file,
+            'date': redflag.date,
+            'status': redflag.status
+        } for redflag in redflags]
+
+        interventions_data = [{
+            'title': intervention.title,
+            'description': intervention.description,
+            'location': intervention.location,
+            'image_file': intervention.image_flag,
+            'date': intervention.date,
+            'status': intervention.status
+        } for intervention in interventions]
+
+        return jsonify({'redflags': redflags_data, 'interventions': interventions_data})
 
     #User filtering personal redflag posts
     @app.route('/user/redflags', methods=['GET'])
-    @login_required
+    @jwt_required()
     def get_user_redflags():
         redflags = RedFlag.query.filter_by(user_id=current_user.id).all()
         return jsonify([redflag.serialize() for redflag in redflags])
 
     #User filtering personal intervention posts
     @app.route('/user/interventions', methods=['GET'])
-    @login_required
+    @jwt_required()
     def get_user_interventions():
         interventions = Intervention.query.filter_by(user_id=current_user.id).all()
         return jsonify([intervention.serialize() for intervention in interventions])
@@ -167,7 +189,7 @@ def init_routes(app):
 
     #Create new redflag post
     @app.route('/user/create_redflag', methods=['POST'])
-    @login_required
+    @jwt_required()
     def create_redflag():
         if request.method == 'POST':
             data = request.json
@@ -202,7 +224,7 @@ def init_routes(app):
 
     #Create new intervention post
     @app.route('/user/create_intervention', methods=['POST'])
-    @login_required
+    @jwt_required()
     def create_intervention():
         if request.method == 'POST':
             data = request.json
@@ -235,7 +257,7 @@ def init_routes(app):
 
     #User delete intervention post
     @app.route('/user/delete_intervention/<int:intervention_id>', methods=['DELETE'])
-    @login_required
+    @jwt_required()
     def delete_intervention(intervention_id):
         intervention = Intervention.query.get_or_404(intervention_id)
 
@@ -248,7 +270,7 @@ def init_routes(app):
 
     #user delete redflag post
     @app.route('/user/delete_redflag/<int:redflag_id>', methods=['DELETE'])
-    @login_required
+    @jwt_required()
     def delete_redflag(redflag_id):
         redflag = RedFlag.query.get_or_404(redflag_id)
 
@@ -261,7 +283,7 @@ def init_routes(app):
 
     #Access to edit personal redflag post
     @app.route('/user/edit_redflag/<int:redflag_id>', methods=['PUT'])
-    @login_required
+    @jwt_required()
     def edit_redflag(redflag_id):
         redflag = RedFlag.query.get_or_404(redflag_id)
 
@@ -287,7 +309,7 @@ def init_routes(app):
         
     #Access to edit personal redflag post    
     @app.route('/user/edit_intervention/<int:intervention_id>', methods=['PUT'])
-    @login_required
+    @jwt_required()
     def edit_intervention(intervention_id):
         intervention = RedFlag.query.get_or_404(intervention_id)
 
@@ -314,7 +336,7 @@ def init_routes(app):
         
     #Admin function to change post status
     @app.route('/admin/change_status/<int:post_id>/<string:post_type>', methods=['PUT'])
-    @login_required
+    @jwt_required()
     def change_status(post_id, post_type):
         if not current_user.is_admin:
             return jsonify({'error': 'Unauthorized to perform this action'}), 403
